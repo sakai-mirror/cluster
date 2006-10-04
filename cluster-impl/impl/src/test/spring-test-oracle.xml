@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE beans PUBLIC "-//SPRING//DTD BEAN//EN" "http://www.springframework.org/dtd/spring-beans.dtd">
+
+<beans>
+    <bean id="testPropertyConfigurer" class="org.springframework.beans.factory.config.PropertyPlaceholderConfigurer">
+        <property name="locations">
+            <list>
+                <value>classpath:/oracle-test.properties</value>
+            </list>
+        </property>
+    </bean>
+
+	<bean id="testDataSource" class="org.apache.commons.dbcp.BasicDataSource">
+		<property name="driverClassName"><value>${connection.driver_class}</value></property>
+		<property name="url"><value>${connection.url}</value></property>
+		<property name="username"><value>${connection.username}</value></property>
+		<property name="password"><value>${connection.password}</value></property>
+	</bean>
+	
+	<bean id="testTransactionManager" class="org.springframework.jdbc.datasource.DataSourceTransactionManager">
+		<property name="dataSource">
+			<ref bean="testDataSource"/>
+		</property>
+	</bean>
+	
+	<bean id="clusterSQL" class="org.sakaiproject.cluster.impl.ClusterSQLOracle" />
+</beans>

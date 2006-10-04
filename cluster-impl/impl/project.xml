@@ -68,6 +68,67 @@
 			<version>1.0.4</version>
 		</dependency>
 
+ 		<dependency>
+			<groupId>${sakai.spring.groupId}</groupId>
+			<artifactId>${sakai.spring.artifactId}</artifactId>
+			<version>${sakai.spring.version}</version>
+		</dependency>
+
+ 		<dependency>
+			<groupId>${sakai.spring.groupId}</groupId>
+			<artifactId>${sakai.spring.mock.artifactId}</artifactId>
+			<version>${sakai.spring.mock.version}</version>
+		</dependency>
+
+		<dependency>
+			<groupId>aopalliance</groupId>
+			<artifactId>aopalliance</artifactId>
+			<version>1.0</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-collections</groupId>
+			<artifactId>commons-collections</artifactId>
+			<version>3.1</version>
+		</dependency>
+
+		<dependency>
+			<groupId>jta</groupId>
+			<artifactId>jta</artifactId>
+			<version>h2.1.8</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-dbcp</groupId>
+			<artifactId>commons-dbcp</artifactId>
+			<version>1.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>commons-pool</groupId>
+			<artifactId>commons-pool</artifactId>
+			<version>1.2</version>
+		</dependency>
+
+		<dependency>
+			<groupId>hsqldb</groupId>
+			<artifactId>hsqldb</artifactId>
+			<version>1.8.0.5</version>
+		</dependency>
+
+		<!--
+        <dependency>
+            <groupId>mysql</groupId>
+            <artifactId>mysql-connector-java</artifactId>
+            <version>3.1.12</version>
+        </dependency>
+        <dependency>
+    	    <groupId>oracle</groupId>
+    	    <artifactId>oracle</artifactId>
+    	    <jar>ojdbc14_g.jar</jar>
+    	</dependency>
+		-->
+
 	</dependencies>
 
 	<build>
@@ -85,6 +146,28 @@
 			</resource>
 
 		</resources>
+		<unitTestSourceDirectory>src/test</unitTestSourceDirectory>
+		<unitTest>
+			<includes>
+ 				<include>org/sakaiproject/cluster/impl/ClusterSQLTestSuite.java</include>
+			</includes>
+			<resources>
+				<resource>
+					<directory>${basedir}/src/test</directory>
+					<includes>
+						<include>log4j.properties</include>
+
+						<include>hsql-test.properties</include>
+						<include>oracle-test.properties</include>
+						<include>mysql-test.properties</include>
+
+						<include>spring-test-hsql.xml</include>
+						<include>spring-test-oracle.xml</include>
+						<include>spring-test-mysql.xml</include>
+					</includes>
+				</resource>
+			</resources>
+		</unitTest>
 
 	</build>
 
