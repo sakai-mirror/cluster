@@ -149,7 +149,7 @@
 		<unitTestSourceDirectory>src/test</unitTestSourceDirectory>
 		<unitTest>
 			<includes>
- 				<include>org/sakaiproject/cluster/impl/ClusterSQLTestSuite.java</include>
+ 				<include>org/sakaiproject/cluster/impl/ClusterSqlTestSuite.java</include>
 			</includes>
 			<resources>
 				<resource>

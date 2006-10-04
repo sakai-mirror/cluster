@@ -26,6 +26,7 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
+import org.sakaiproject.cluster.api.ClusterSql;
 import org.sakaiproject.cluster.api.ClusterService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.component.cover.ComponentManager;
@@ -36,7 +37,6 @@ import org.sakaiproject.event.api.UsageSession;
 import org.sakaiproject.event.api.UsageSessionService;
 import org.sakaiproject.presence.api.PresenceService;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
-import org.sakaiproject.cluster.impl.ClusterSql;
 
 
 /**
@@ -276,8 +276,7 @@ public class SakaiClusterService implements ClusterService
 	{
 		// get all expired open app servers not me
 
-		String statement = ClusterSql.returnSelectServerIdFromCluster();
-
+		String statement = clusterSql.returnSelectServerIdFromCluster();
 		
 		List servers = m_sqlService.dbRead(statement);
 		
@@ -312,7 +311,7 @@ public class SakaiClusterService implements ClusterService
 			
 			// register in the cluster table
 
-			String statement = ClusterSql.returnInsertIdUpdateTime(m_sqlService.getVendor());
+			String statement = clusterSql.returnInsertIdUpdateTime();
 
 			Object fields[] = new Object[1];
 			fields[0] = m_serverConfigurationService.getServerIdInstance();
@@ -349,7 +348,7 @@ public class SakaiClusterService implements ClusterService
 			
 			// close our entry from the database - delete the record
 
-			String statement = ClusterSql.returnDeleteId();
+			String statement = clusterSql.returnDeleteId();
 
 			Object fields[] = new Object[1];
 			fields[0] = m_serverConfigurationService.getServerIdInstance();
@@ -381,7 +380,7 @@ public class SakaiClusterService implements ClusterService
 					if (M_log.isDebugEnabled()) M_log.debug("checking...");
 					
 					// if we have been closed, reopen!
-					String statement = ClusterSql.returnServerIdFromCluster();
+					String statement = clusterSql.returnServerIdFromCluster();
 
 					Object[] fields = new Object[1];
 					fields[0] = serverIdInstance;
@@ -392,7 +391,7 @@ public class SakaiClusterService implements ClusterService
 						
 						//					statement = "insert into SAKAI_CLUSTER (SERVER_ID,UPDATE_TIME) values (?, " + sqlTimestamp() + ")";
 
-						statement = ClusterSql.returnInsertIdUpdateTime(m_sqlService.getVendor());
+						statement = clusterSql.returnInsertIdUpdateTime();
 
 						fields[0] = serverIdInstance;
 						boolean ok = m_sqlService.dbWrite(statement, fields);
@@ -407,7 +406,7 @@ public class SakaiClusterService implements ClusterService
 					{
 						// register that this app server is alive and well
 
-						statement = ClusterSql.returnUpdateTime(m_sqlService.getVendor());
+						statement = clusterSql.returnUpdateTime();
 
 						fields[0] = serverIdInstance;
 						boolean ok = m_sqlService.dbWrite(statement, fields);
@@ -423,7 +422,7 @@ public class SakaiClusterService implements ClusterService
 					{
 						// get all expired open app servers not me
 
-						statement = ClusterSql.returnGenericOldServerId(m_sqlService.getVendor(), m_expired);
+						statement = clusterSql.returnGenericOldServerId(m_expired);
 
 						// setup the fields to skip reading me!
 						fields[0] = serverIdInstance;
@@ -438,7 +437,7 @@ public class SakaiClusterService implements ClusterService
 							// close the server - delete the record
 							//		statement = "delete from SAKAI_CLUSTER where SERVER_ID = ?";
 
-							statement = ClusterSql.returnDeleteId();
+							statement = clusterSql.returnDeleteId();
 
 							fields[0] = serverId;
 							boolean ok = m_sqlService.dbWrite(statement, fields);
@@ -452,7 +451,7 @@ public class SakaiClusterService implements ClusterService
 						
 						// find all the session ids of sessions that are open but are from closed servers
 
-						statement = ClusterSql.returnSelectOpenSessionsClosedServers();
+						statement = clusterSql.returnSelectOpenSessionsClosedServers();
 
 						
 						List sessions = m_sqlService.dbRead(statement);
@@ -464,14 +463,14 @@ public class SakaiClusterService implements ClusterService
 							
 							// get all the presence for this session
 
-							statement = ClusterSql.returnSelectLocationFromPresenceBySessionSql();
+							statement = clusterSql.returnSelectLocationFromPresenceBySessionSql();
 
 							fields[0] = sessionId;
 							List presence = m_sqlService.dbRead(statement, fields, null);
 							
 							// remove all the presence for this session
 
-							statement = ClusterSql.returnDeletePresenceBySession();
+							statement = clusterSql.returnDeletePresenceBySession();
 
 							boolean ok = m_sqlService.dbWrite(statement, fields);
 							if (!ok)
@@ -498,7 +497,7 @@ public class SakaiClusterService implements ClusterService
 							
 							// close this session on the db
 
-							statement = ClusterSql.returnUpdateSessionEnd(m_sqlService.getVendor());
+							statement = clusterSql.returnUpdateSessionEnd();
 
 							fields[0] = sessionId;
 							ok = m_sqlService.dbWrite(statement, fields);
@@ -509,7 +508,7 @@ public class SakaiClusterService implements ClusterService
 							
 							// remove any locks from the session
 
-							statement = ClusterSql.returnDeleteSessionLock();
+							statement = clusterSql.returnDeleteSessionLock();
 
 							fields[0] = sessionId;
 							ok = m_sqlService.dbWrite(statement, fields);

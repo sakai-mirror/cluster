@@ -23,5 +23,5 @@
 		</property>
 	</bean>
 	
-	<bean id="clusterSQL" class="org.sakaiproject.cluster.impl.ClusterSQLHsql" />
+	<bean id="clusterSql" class="org.sakaiproject.cluster.impl.ClusterSqlHsql" />
 </beans>
