@@ -26,8 +26,8 @@ import java.util.List;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
-import org.sakaiproject.cluster.api.ClusterSql;
 import org.sakaiproject.cluster.api.ClusterService;
+import org.sakaiproject.cluster.api.ClusterSql;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.db.api.SqlService;
