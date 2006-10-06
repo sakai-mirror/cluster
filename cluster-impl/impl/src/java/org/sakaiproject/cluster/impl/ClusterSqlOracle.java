@@ -1,6 +1,6 @@
 /**********************************************************************************
- * $URL$
- * $Id$
+ * $HeadURL:$
+ * $Id:$
  ***********************************************************************************
  *
  * Copyright (c) 2004, 2005, 2006 The Sakai Foundation.
@@ -23,7 +23,7 @@ package org.sakaiproject.cluster.impl;
 
 class  ClusterSqlOracle extends ClusterSqlHsql {
 
-	public String returnGenericOldServerId(String vendor, long expired) {
+	public String returnGenericOldServerId(long expired) {
 		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < (CURRENT_TIMESTAMP - " + ((float) expired / (float) (60 * 60 * 24)) + " )";
 	}
 
