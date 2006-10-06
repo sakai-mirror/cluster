@@ -25,9 +25,9 @@ package org.sakaiproject.cluster.impl;
 
 import org.sakaiproject.cluster.api.ClusterSql;
 
-public abstract class ClusterSqlGeneric implements ClusterSql {
+public class ClusterSqlGeneric implements ClusterSql {
 
-	protected String sqlTimestamp() {
+	public String sqlTimestamp() {
 		return "CURRENT_TIMESTAMP";
 	}
 
@@ -119,6 +119,8 @@ public abstract class ClusterSqlGeneric implements ClusterSql {
 	/* (non-Javadoc)
 	 * @see org.sakaiproject.cluster.impl.ClusterSql#returnGenericOldServerId(long)
 	 */
-	public abstract String returnGenericOldServerId(long expired);
+	public  String returnGenericOldServerId(long expired) {
+		return "returnGenericOldServerId must be implemented.";
+	}
 
 }
