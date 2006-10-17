@@ -27,8 +27,15 @@ class  ClusterSqlMysql extends ClusterSqlGeneric {
 		return "CURRENT_TIMESTAMP()";
 	}
 
-	public String returnGenericOldServerId(long expired) {
-		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < CURRENT_TIMESTAMP() - INTERVAL "
+	public String returnOldServerId(long expired) {
+		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < "
+		+sqlTimestamp()
+		+" - INTERVAL "
 		+ expired + " SECOND";
 	}
+	
+//	public String returnOldServerId(long expired) {
+//		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < CURRENT_TIMESTAMP() - INTERVAL "
+//		+ expired + " SECOND";
+//	}
 }

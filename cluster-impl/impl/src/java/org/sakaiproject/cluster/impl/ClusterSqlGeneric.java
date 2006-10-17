@@ -119,8 +119,8 @@ public class ClusterSqlGeneric implements ClusterSql {
 	/* (non-Javadoc)
 	 * @see org.sakaiproject.cluster.impl.ClusterSql#returnGenericOldServerId(long)
 	 */
-	public  String returnGenericOldServerId(long expired) {
-		return "returnGenericOldServerId must be implemented.";
+	public  String returnOldServerId(long expired) {
+		return "returnGenericOldServerId must be implemented for each dialect.";
 	}
 
 }

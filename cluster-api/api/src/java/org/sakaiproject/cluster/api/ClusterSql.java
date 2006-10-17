@@ -45,7 +45,7 @@ public interface ClusterSql {
 
 	public String returnDeleteSessionLock();
 
-	public String returnGenericOldServerId(long expired);
+	public String returnOldServerId(long expired);
 	
 	public String sqlTimestamp(); 
 

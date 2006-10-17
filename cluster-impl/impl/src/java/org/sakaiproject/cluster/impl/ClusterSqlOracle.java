@@ -23,8 +23,14 @@ package org.sakaiproject.cluster.impl;
 
 class  ClusterSqlOracle extends ClusterSqlGeneric {
 
-	public String returnGenericOldServerId(long expired) {
-		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < (CURRENT_TIMESTAMP - " + ((float) expired / (float) (60 * 60 * 24)) + " )";
+	public String returnOldServerId(long expired) {
+//		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < (CURRENT_TIMESTAMP - " + ((float) expired / (float) (60 * 60 * 24)) + " )";
+		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < ("
+			+ sqlTimestamp()
+			+ " - " 
+			+ ((float) expired / (float) (60 * 60 * 24)) 
+			+ " )";
+		
 	}
 
 }

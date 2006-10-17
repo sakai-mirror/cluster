@@ -28,55 +28,20 @@ import junit.framework.TestCase;
 
 import org.sakaiproject.cluster.api.ClusterSql;
 
-public class ClusterSqlGenericJunitTest extends TestCase {
+public abstract class ClusterSqlGenericJunitAbstract extends TestCase {
 
-	ClusterSql cs = null;
+	protected ClusterSql cs = null;
 
-	protected void setUp() {
-		cs = new ClusterSqlGeneric();
-	}
+	// abstract protected void setUp();
 
-	public void testReturnGenericOldServerId() {
-		// Must be overridden, so test must be overridden also.
-		fail();
-	}
+	public abstract void testReturnOldServerId();
 	
 	/*
 	 * Test method for
 	 * 'org.sakaiproject.cluster.impl.ClusterSqlGeneric.sqlTimestamp()'
 	 */
 	public void testSqlTimestamp() {
-		assertEquals("CURRENT_TIMESTAMP", cs.sqlTimestamp());
-	}
-
-	/*
-	 * Test method for
-	 * 'org.sakaiproject.cluster.impl.ClusterSqlGeneric.returnInsertIdUpdateTime()'
-	 */
-	public void testReturnInsertIdUpdateTime() {
-		String statement = "insert into SAKAI_CLUSTER (SERVER_ID,UPDATE_TIME) values (?, "
-				+ "CURRENT_TIMESTAMP" + ")";
-		assertEquals(statement, cs.returnInsertIdUpdateTime());
-	}
-
-	/*
-	 * Test method for
-	 * 'org.sakaiproject.cluster.impl.ClusterSqlGeneric.returnUpdateTime()'
-	 */
-	public void testReturnUpdateTime() {
-		String statement = "update SAKAI_CLUSTER set UPDATE_TIME = " + "CURRENT_TIMESTAMP"
-		+ " where SERVER_ID = ?";
-		assertEquals(statement,cs.returnUpdateTime());
-	}
-
-	/*
-	 * Test method for
-	 * 'org.sakaiproject.cluster.impl.ClusterSqlGeneric.returnUpdateSessionEnd()'
-	 */
-	public void testReturnUpdateSessionEnd() {
-		String statement = "update SAKAI_SESSION set SESSION_END = " + "CURRENT_TIMESTAMP"
-		+ " where SESSION_ID = ?";
-		assertEquals(statement,cs.returnUpdateSessionEnd());
+		assertEquals("CURRENT_TIMESTAMP()", cs.sqlTimestamp());
 	}
 
 	/*

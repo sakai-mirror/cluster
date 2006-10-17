@@ -422,7 +422,7 @@ public class SakaiClusterService implements ClusterService
 					{
 						// get all expired open app servers not me
 
-						statement = clusterSql.returnGenericOldServerId(m_expired);
+						statement = clusterSql.returnOldServerId(m_expired);
 
 						// setup the fields to skip reading me!
 						fields[0] = serverIdInstance;

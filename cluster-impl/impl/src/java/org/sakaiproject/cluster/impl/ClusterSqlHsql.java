@@ -25,8 +25,12 @@ class  ClusterSqlHsql extends ClusterSqlGeneric  {
 	/* (non-Javadoc)
 	 * @see org.sakaiproject.cluster.impl.ClusterSql#returnGenericOldServerId(long)
 	 */
-	public String returnGenericOldServerId(long expired) {
-		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and DATEDIFF('ss', UPDATE_TIME, CURRENT_TIMESTAMP) >= " + expired;
+	public String returnOldServerId(long expired) {
+	//	return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and DATEDIFF('ss', UPDATE_TIME, CURRENT_TIMESTAMP) >= " + expired;
+		return "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and DATEDIFF('ss', UPDATE_TIME, "
+		+ sqlTimestamp() 
+		+ ") >= " 
+		+ expired;
 	}
 
 }
