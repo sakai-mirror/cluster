@@ -4,29 +4,30 @@
  ***********************************************************************************
  *
  * Copyright (c) 2004, 2005, 2006 The Sakai Foundation.
- * 
- * Licensed under the Educational Community License, Version 1.0 (the "License"); 
- * you may not use this file except in compliance with the License. 
+ *
+ * Licensed under the Educational Community License, Version 1.0 (the "License");
+ * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- * 
+ *
  *      http://www.opensource.org/licenses/ecl1.php
- * 
- * Unless required by applicable law or agreed to in writing, software 
- * distributed under the License is distributed on an "AS IS" BASIS, 
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied. 
- * See the License for the specific language governing permissions and 
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
  * limitations under the License.
  *
  **********************************************************************************/
-
 package org.sakaiproject.cluster.impl;
 
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 
 import org.apache.commons.logging.Log;
 import org.apache.commons.logging.LogFactory;
 import org.sakaiproject.cluster.api.ClusterService;
+import org.sakaiproject.cluster.api.ClusterServiceSql;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.db.api.SqlService;
@@ -59,7 +60,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: ServerConfigurationService.
-	 * 
+	 *
 	 * @param service
 	 *        The ServerConfigurationService.
 	 */
@@ -73,7 +74,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: EventTrackingService.
-	 * 
+	 *
 	 * @param service
 	 *        The EventTrackingService.
 	 */
@@ -87,7 +88,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: SqlService.
-	 * 
+	 *
 	 * @param service
 	 *        The SqlService.
 	 */
@@ -101,7 +102,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: UsageSessionService.
-	 * 
+	 *
 	 * @param service
 	 *        The UsageSessionService.
 	 */
@@ -115,7 +116,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: PresenceService.
-	 * 
+	 *
 	 * @param service
 	 *        The PresenceService.
 	 */
@@ -129,7 +130,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Configuration: set the refresh value
-	 * 
+	 *
 	 * @param value
 	 *        The refresh value.
 	 */
@@ -149,7 +150,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Configuration: set the expired value
-	 * 
+	 *
 	 * @param value
 	 *        The expired value.
 	 */
@@ -169,7 +170,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Configuration: to run the ddl on init or not.
-	 * 
+	 *
 	 * @param value
 	 *        the auto ddl value.
 	 */
@@ -183,7 +184,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency - set the current manager.
-	 * 
+	 *
 	 * @param value
 	 *        The current manager.
 	 */
@@ -197,7 +198,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Configuration: set the percent of maintenance passes to run the full de-ghosting / cleanup activities
-	 * 
+	 *
 	 * @param value
 	 *        The percent of maintenance passes to run the full de-ghosting / cleanup activities.
 	 */
@@ -212,6 +213,23 @@ public class SakaiClusterService implements ClusterService
 		}
 	}
 
+   public void setDatabaseBeans(Map databaseBeans) {
+     this.databaseBeans = databaseBeans;
+   }
+   protected Map<String, ClusterServiceSql> databaseBeans;        // contains a map of the database dependent beans injected by spring
+   protected ClusterServiceSql              clusterServiceSql;    // contains database dependent code
+
+   public ClusterServiceSql getClusterServiceSql() {
+      return clusterServiceSql;
+   }
+
+   /**
+    * sets which bean containing database dependent code should be used depending on the database vendor.
+    */
+   public void setClusterServiceSql(String vendor) {
+      this.clusterServiceSql = (databaseBeans.containsKey(vendor) ? databaseBeans.get(vendor) : databaseBeans.get("default"));
+   }
+
 	/**********************************************************************************************************************************************************************************************************************************************************
 	 * Init and Destroy
 	 *********************************************************************************************************************************************************************************************************************************************************/
@@ -221,6 +239,7 @@ public class SakaiClusterService implements ClusterService
 	 */
 	public void init()
 	{
+      setClusterServiceSql(m_sqlService.getVendor());
 		try
 		{
 			// if we are auto-creating our schema, check and create
@@ -259,9 +278,8 @@ public class SakaiClusterService implements ClusterService
 	public List getServers()
 	{
 		// get all expired open app servers not me
-		String statement = "select SERVER_ID from SAKAI_CLUSTER order by SERVER_ID asc";
-
-		List servers = m_sqlService.dbRead(statement);
+      String statement = clusterServiceSql.getListServersSql();
+      List   servers   = m_sqlService.dbRead(statement);
 
 		return servers;
 	}
@@ -293,7 +311,7 @@ public class SakaiClusterService implements ClusterService
 			if (m_maintenanceChecker != null) return;
 
 			// register in the cluster table
-			String statement = "insert into SAKAI_CLUSTER (SERVER_ID,UPDATE_TIME) values (?, " + sqlTimestamp() + ")";
+         String statement = clusterServiceSql.getInsertServerSql();
 			Object fields[] = new Object[1];
 			fields[0] = m_serverConfigurationService.getServerIdInstance();
 			boolean ok = m_sqlService.dbWrite(statement, fields);
@@ -328,7 +346,7 @@ public class SakaiClusterService implements ClusterService
 			}
 
 			// close our entry from the database - delete the record
-			String statement = "delete from SAKAI_CLUSTER where SERVER_ID = ?";
+         String statement = clusterServiceSql.getDeleteServerSql();
 			Object fields[] = new Object[1];
 			fields[0] = m_serverConfigurationService.getServerIdInstance();
 			boolean ok = m_sqlService.dbWrite(statement, fields);
@@ -359,7 +377,7 @@ public class SakaiClusterService implements ClusterService
 					if (M_log.isDebugEnabled()) M_log.debug("checking...");
 
 					// if we have been closed, reopen!
-					String statement = "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID = ?";
+               String statement = clusterServiceSql.getReadServerSql();
 					Object[] fields = new Object[1];
 					fields[0] = serverIdInstance;
 					List results = m_sqlService.dbRead(statement, fields, null);
@@ -367,7 +385,7 @@ public class SakaiClusterService implements ClusterService
 					{
 						M_log.warn("run(): server has been closed in cluster table, reopened: " + serverIdInstance);
 
-						statement = "insert into SAKAI_CLUSTER (SERVER_ID,UPDATE_TIME) values (?, " + sqlTimestamp() + ")";
+                  statement = clusterServiceSql.getInsertServerSql();
 						fields[0] = serverIdInstance;
 						boolean ok = m_sqlService.dbWrite(statement, fields);
 						if (!ok)
@@ -380,7 +398,7 @@ public class SakaiClusterService implements ClusterService
 					else
 					{
 						// register that this app server is alive and well
-						statement = "update SAKAI_CLUSTER set UPDATE_TIME = " + sqlTimestamp() + " where SERVER_ID = ?";
+                  statement = clusterServiceSql.getUpdateServerSql();
 						fields[0] = serverIdInstance;
 						boolean ok = m_sqlService.dbWrite(statement, fields);
 						if (!ok)
@@ -394,22 +412,7 @@ public class SakaiClusterService implements ClusterService
 					if (rand < m_ghostingPercent)
 					{
 						// get all expired open app servers not me
-						if ("oracle".equals(m_sqlService.getVendor()))
-						{
-							statement = "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < (CURRENT_TIMESTAMP - "
-									+ ((float) m_expired / (float) (60 * 60 * 24)) + " )";
-						}
-						else if ("mysql".equals(m_sqlService.getVendor()))
-						{
-							statement = "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and UPDATE_TIME < CURRENT_TIMESTAMP() - INTERVAL "
-									+ m_expired + " SECOND";
-						}
-						else
-						// if ("hsqldb".equals(m_sqlService.getVendor()))
-						{
-							statement = "select SERVER_ID from SAKAI_CLUSTER where SERVER_ID != ? and DATEDIFF('ss', UPDATE_TIME, CURRENT_TIMESTAMP) >= "
-									+ m_expired;
-						}
+                  statement = clusterServiceSql.getListExpiredServers(m_expired);
 						// setup the fields to skip reading me!
 						fields[0] = serverIdInstance;
 
@@ -421,7 +424,7 @@ public class SakaiClusterService implements ClusterService
 							String serverId = (String) iInstances.next();
 
 							// close the server - delete the record
-							statement = "delete from SAKAI_CLUSTER where SERVER_ID = ?";
+                     statement = clusterServiceSql.getDeleteServerSql();
 							fields[0] = serverId;
 							boolean ok = m_sqlService.dbWrite(statement, fields);
 							if (!ok)
@@ -433,10 +436,7 @@ public class SakaiClusterService implements ClusterService
 						}
 
 						// find all the session ids of sessions that are open but are from closed servers
-						statement = "select SS.SESSION_ID " + "from SAKAI_SESSION SS "
-								+ "left join SAKAI_CLUSTER SC on SS.SESSION_SERVER = SC.SERVER_ID "
-								+ "where SS.SESSION_START = SS.SESSION_END " + "and SC.SERVER_ID is null";
-
+                  statement = clusterServiceSql.getListOpenSessionsFromClosedServersSql();
 						List sessions = m_sqlService.dbRead(statement);
 
 						// process each session to close it and lose it's presence
@@ -445,12 +445,12 @@ public class SakaiClusterService implements ClusterService
 							String sessionId = (String) iSessions.next();
 
 							// get all the presence for this session
-							statement = "select LOCATION_ID from SAKAI_PRESENCE where SESSION_ID = ?";
+                     statement = clusterServiceSql.getPresenceSql();
 							fields[0] = sessionId;
 							List presence = m_sqlService.dbRead(statement, fields, null);
 
 							// remove all the presence for this session
-							statement = "delete from SAKAI_PRESENCE where SESSION_ID = ?";
+                     statement = clusterServiceSql.getDeletePresenceSql();
 							boolean ok = m_sqlService.dbWrite(statement, fields);
 							if (!ok)
 							{
@@ -475,7 +475,7 @@ public class SakaiClusterService implements ClusterService
 							m_eventTrackingService.post(event, session);
 
 							// close this session on the db
-							statement = "update SAKAI_SESSION set SESSION_END = " + sqlTimestamp() + " where SESSION_ID = ?";
+                     statement = clusterServiceSql.getUpdateSakaiSessionSql();
 							fields[0] = sessionId;
 							ok = m_sqlService.dbWrite(statement, fields);
 							if (!ok)
@@ -484,7 +484,7 @@ public class SakaiClusterService implements ClusterService
 							}
 
 							// remove any locks from the session
-							statement = "delete from SAKAI_LOCKS where USAGE_SESSION_ID = ?";
+                     statement = clusterServiceSql.getDeleteLocksSql();
 							fields[0] = sessionId;
 							ok = m_sqlService.dbWrite(statement, fields);
 							if (!ok)
@@ -518,20 +518,6 @@ public class SakaiClusterService implements ClusterService
 			}
 
 			if (M_log.isDebugEnabled()) M_log.debug("done");
-		}
-	}
-
-	/** Return the vendor-specific SQL for the current timestamp */
-	private String sqlTimestamp()
-	{
-		if ("mysql".equals(m_sqlService.getVendor()))
-		{
-			return "CURRENT_TIMESTAMP()";
-		}
-		else
-		// oracle, hsqldb
-		{
-			return "CURRENT_TIMESTAMP";
 		}
 	}
 }
