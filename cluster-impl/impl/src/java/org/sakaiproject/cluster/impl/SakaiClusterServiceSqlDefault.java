@@ -59,10 +59,9 @@ public class SakaiClusterServiceSqlDefault implements ClusterServiceSql
 	}
 
 	/**
-	 * returns the sql statement for obtaining a list of expired sakai servers from the sakai_cluster table. <br/>br/>
-	 * 
-	 * @param timeout
-	 *        how long (in seconds) we give an app server to respond before it is considered lost.
+    * returns the sql statement for obtaining a list of expired sakai servers from the sakai_cluster table.
+    * <br/>br/>
+    * @param timeout  how long (in seconds) we give an app server to respond before it is considered lost.
 	 */
 	public String getListExpiredServers(long timeout)
 	{
