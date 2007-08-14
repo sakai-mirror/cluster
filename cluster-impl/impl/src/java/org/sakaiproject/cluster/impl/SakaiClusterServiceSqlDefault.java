@@ -35,14 +35,6 @@ public class SakaiClusterServiceSqlDefault implements ClusterServiceSql
 	}
 
 	/**
-	 * returns the sql statement for retrieving a sakai presence from the sakai_presence table.
-	 */
-	public String getDeletePresenceSql()
-	{
-		return "delete from SAKAI_PRESENCE where SESSION_ID = ?";
-	}
-
-	/**
 	 * returns the sql statement for deleting a server from the sakai_cluster table.
 	 */
 	public String getDeleteServerSql()
@@ -83,14 +75,6 @@ public class SakaiClusterServiceSqlDefault implements ClusterServiceSql
 	{
 		return "select SS.SESSION_ID from SAKAI_SESSION SS left join SAKAI_CLUSTER SC on SS.SESSION_SERVER = SC.SERVER_ID "
 				+ "where SS.SESSION_START = SS.SESSION_END and SC.SERVER_ID is null";
-	}
-
-	/**
-	 * returns the sql statement for retrieving a sakai presence from the sakai_presence table.
-	 */
-	public String getPresenceSql()
-	{
-		return "select LOCATION_ID from SAKAI_PRESENCE where SESSION_ID = ?";
 	}
 
 	/**

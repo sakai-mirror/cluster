@@ -32,11 +32,6 @@ public interface ClusterServiceSql
 	String getDeleteLocksSql();
 
 	/**
-	 * returns the sql statement for retrieving a sakai presence from the sakai_presence table.
-	 */
-	String getDeletePresenceSql();
-
-	/**
 	 * returns the sql statement for deleting a server from the sakai_cluster table.
 	 */
 	String getDeleteServerSql();
@@ -63,11 +58,6 @@ public interface ClusterServiceSql
 	 * find all the session ids of sessions that are open but are from closed servers.
 	 */
 	String getListOpenSessionsFromClosedServersSql();
-
-	/**
-	 * returns the sql statement for retrieving a sakai presence from the sakai_presence table.
-	 */
-	String getPresenceSql();
 
 	/**
 	 * returns the sql statement for retrieving a particular server from the sakai_cluster table.

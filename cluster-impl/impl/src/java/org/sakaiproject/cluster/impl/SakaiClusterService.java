@@ -35,7 +35,6 @@ import org.sakaiproject.event.api.Event;
 import org.sakaiproject.event.api.EventTrackingService;
 import org.sakaiproject.event.api.UsageSession;
 import org.sakaiproject.event.api.UsageSessionService;
-import org.sakaiproject.presence.api.PresenceService;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
 
 /**
@@ -111,19 +110,6 @@ public class SakaiClusterService implements ClusterService
 		m_usageSessionService = service;
 	}
 
-	/** Dependency: PresenceService. */
-	protected PresenceService m_presenceService = null;
-
-	/**
-	 * Dependency: PresenceService.
-	 * 
-	 * @param service
-	 *        The PresenceService.
-	 */
-	public void setPresenceService(PresenceService service)
-	{
-		m_presenceService = service;
-	}
 
 	/** Configuration: how often to register that we are alive with the cluster table (seconds). */
 	protected long m_refresh = 60;
@@ -365,8 +351,8 @@ public class SakaiClusterService implements ClusterService
 
 		/**
 		 * Run the maintenance thread. Every REFRESH seconds, re-register this app server as alive in the cluster. Then check for any cluster entries
-		 * that are more than EXPIRED seconds old, indicating a failed app server, and remove that record, that server's sessions, and presence,
-		 * generating appropriate session and presence events so the other app servers know what's going on. The "then" checks need not be done each
+		 * that are more than EXPIRED seconds old, indicating a failed app server, and remove that record, that server's sessions, 
+		 * generating appropriate session events so the other app servers know what's going on. The "then" checks need not be done each
 		 * iteration - run them on 1 of n randomly choosen iterations. In a clustered environment, this also distributes the work over the cluster
 		 * better.
 		 */
@@ -448,45 +434,25 @@ public class SakaiClusterService implements ClusterService
 						statement = clusterServiceSql.getListOpenSessionsFromClosedServersSql();
 						List sessions = m_sqlService.dbRead(statement);
 
-						// process each session to close it and lose it's presence
+						// process each session to close it 
 						for (Iterator iSessions = sessions.iterator(); iSessions.hasNext();)
 						{
 							String sessionId = (String) iSessions.next();
 
-							// get all the presence for this session
-							statement = clusterServiceSql.getPresenceSql();
-							fields[0] = sessionId;
-							List presence = m_sqlService.dbRead(statement, fields, null);
-
-							// remove all the presence for this session
-							statement = clusterServiceSql.getDeletePresenceSql();
-							boolean ok = m_sqlService.dbWrite(statement, fields);
-							if (!ok)
-							{
-								M_log.warn("run(): dbWrite failed: " + statement);
-							}
 
 							// get the session
 							UsageSession session = m_usageSessionService.getSession(sessionId);
 
-							// send presence end events for these
-							for (Iterator iPresence = presence.iterator(); iPresence.hasNext();)
-							{
-								String locationId = (String) iPresence.next();
-
-								Event event = m_eventTrackingService.newEvent(PresenceService.EVENT_ABSENCE, m_presenceService
-										.presenceReference(locationId), true);
-								m_eventTrackingService.post(event, session);
-							}
 
 							// a session closed event (logout)
 							Event event = m_eventTrackingService.newEvent(UsageSessionService.EVENT_LOGOUT, null, true);
 							m_eventTrackingService.post(event, session);
 
 							// close this session on the db
+							// TODO: cluster service should not write direct to Session tables.
 							statement = clusterServiceSql.getUpdateSakaiSessionSql();
 							fields[0] = sessionId;
-							ok = m_sqlService.dbWrite(statement, fields);
+							boolean ok = m_sqlService.dbWrite(statement, fields);
 							if (!ok)
 							{
 								M_log.warn("run(): dbWrite failed: " + statement);
