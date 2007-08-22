@@ -32,6 +32,11 @@ public interface ClusterServiceSql
 	String getDeleteLocksSql();
 
 	/**
+	 * @return the SQL statement to find lock records belonging to closed or deleted sessions
+	 */
+	String getOrphanedLockSessionsSql();
+
+	/**
 	 * returns the sql statement for deleting a server from the sakai_cluster table.
 	 */
 	String getDeleteServerSql();
@@ -55,11 +60,6 @@ public interface ClusterServiceSql
 	String getListServersSql();
 
 	/**
-	 * find all the session ids of sessions that are open but are from closed servers.
-	 */
-	String getListOpenSessionsFromClosedServersSql();
-
-	/**
 	 * returns the sql statement for retrieving a particular server from the sakai_cluster table.
 	 */
 	String getReadServerSql();
@@ -68,11 +68,6 @@ public interface ClusterServiceSql
 	 * returns the sql statement for updating a server in the sakai_cluster table.
 	 */
 	String getUpdateServerSql();
-
-	/**
-	 * returns the sql statement for updating a sakai session in the sakai_session table.
-	 */
-	String getUpdateSakaiSessionSql();
 
 	/**
 	 * returns the current timestamp.

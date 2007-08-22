@@ -33,6 +33,18 @@ public class SakaiClusterServiceSqlDefault implements ClusterServiceSql
 	{
 		return "delete from SAKAI_LOCKS where USAGE_SESSION_ID = ?";
 	}
+	
+	/**
+	 * Because the most efficient form of this query requires knowing the internals of
+	 * both the SAKAI_LOCKS and SAKAI_SESSION tables, it doesn't fit easily into either
+	 * the Event or Db modules.
+	 * 
+	 * @return the SQL statement to find closed or deleted sessions referred to by lock records
+	 */
+	public String getOrphanedLockSessionsSql()
+	{
+		return "select distinct l.USAGE_SESSION_ID from SAKAI_LOCKS l left join SAKAI_SESSION s on l.USAGE_SESSION_ID = s.SESSION_ID where s.SESSION_ACTIVE is null";
+	}
 
 	/**
 	 * returns the sql statement for deleting a server from the sakai_cluster table.
@@ -69,15 +81,6 @@ public class SakaiClusterServiceSqlDefault implements ClusterServiceSql
 	}
 
 	/**
-	 * find all the session ids of sessions that are open but are from closed servers.
-	 */
-	public String getListOpenSessionsFromClosedServersSql()
-	{
-		return "select SS.SESSION_ID from SAKAI_SESSION SS left join SAKAI_CLUSTER SC on SS.SESSION_SERVER = SC.SERVER_ID "
-				+ "where SS.SESSION_START = SS.SESSION_END and SC.SERVER_ID is null";
-	}
-
-	/**
 	 * returns the sql statement for retrieving a particular server from the sakai_cluster table.
 	 */
 	public String getReadServerSql()
@@ -91,14 +94,6 @@ public class SakaiClusterServiceSqlDefault implements ClusterServiceSql
 	public String getUpdateServerSql()
 	{
 		return "update SAKAI_CLUSTER set UPDATE_TIME = " + sqlTimestamp() + " where SERVER_ID = ?";
-	}
-
-	/**
-	 * returns the sql statement for updating a sakai session in the sakai_session table.
-	 */
-	public String getUpdateSakaiSessionSql()
-	{
-		return "update SAKAI_SESSION set SESSION_END = " + sqlTimestamp() + " where SESSION_ID = ?";
 	}
 
 	/**

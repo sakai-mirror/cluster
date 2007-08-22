@@ -31,9 +31,7 @@ import org.sakaiproject.cluster.api.ClusterService;
 import org.sakaiproject.component.api.ServerConfigurationService;
 import org.sakaiproject.component.cover.ComponentManager;
 import org.sakaiproject.db.api.SqlService;
-import org.sakaiproject.event.api.Event;
 import org.sakaiproject.event.api.EventTrackingService;
-import org.sakaiproject.event.api.UsageSession;
 import org.sakaiproject.event.api.UsageSessionService;
 import org.sakaiproject.thread_local.api.ThreadLocalManager;
 
@@ -59,7 +57,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: ServerConfigurationService.
-	 * 
+	 *
 	 * @param service
 	 *        The ServerConfigurationService.
 	 */
@@ -73,7 +71,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: EventTrackingService.
-	 * 
+	 *
 	 * @param service
 	 *        The EventTrackingService.
 	 */
@@ -87,7 +85,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: SqlService.
-	 * 
+	 *
 	 * @param service
 	 *        The SqlService.
 	 */
@@ -101,7 +99,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency: UsageSessionService.
-	 * 
+	 *
 	 * @param service
 	 *        The UsageSessionService.
 	 */
@@ -116,7 +114,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Configuration: set the refresh value
-	 * 
+	 *
 	 * @param value
 	 *        The refresh value.
 	 */
@@ -136,7 +134,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Configuration: set the expired value
-	 * 
+	 *
 	 * @param value
 	 *        The expired value.
 	 */
@@ -156,7 +154,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Configuration: to run the ddl on init or not.
-	 * 
+	 *
 	 * @param value
 	 *        the auto ddl value.
 	 */
@@ -170,7 +168,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Dependency - set the current manager.
-	 * 
+	 *
 	 * @param value
 	 *        The current manager.
 	 */
@@ -184,7 +182,7 @@ public class SakaiClusterService implements ClusterService
 
 	/**
 	 * Configuration: set the percent of maintenance passes to run the full de-ghosting / cleanup activities
-	 * 
+	 *
 	 * @param value
 	 *        The percent of maintenance passes to run the full de-ghosting / cleanup activities.
 	 */
@@ -268,11 +266,11 @@ public class SakaiClusterService implements ClusterService
 	 * ClusterService implementation
 	 ************************************************************************************************************************************************/
 
-	public List getServers()
+	@SuppressWarnings("unchecked")
+	public List<String> getServers()
 	{
-		// get all expired open app servers not me
 		String statement = clusterServiceSql.getListServersSql();
-		List servers = m_sqlService.dbRead(statement);
+		List<String> servers = m_sqlService.dbRead(statement);
 
 		return servers;
 	}
@@ -351,7 +349,7 @@ public class SakaiClusterService implements ClusterService
 
 		/**
 		 * Run the maintenance thread. Every REFRESH seconds, re-register this app server as alive in the cluster. Then check for any cluster entries
-		 * that are more than EXPIRED seconds old, indicating a failed app server, and remove that record, that server's sessions, 
+		 * that are more than EXPIRED seconds old, indicating a failed app server, and remove that record, that server's sessions,
 		 * generating appropriate session events so the other app servers know what's going on. The "then" checks need not be done each
 		 * iteration - run them on 1 of n randomly choosen iterations. In a clustered environment, this also distributes the work over the cluster
 		 * better.
@@ -429,42 +427,25 @@ public class SakaiClusterService implements ClusterService
 
 							M_log.warn("run(): ghost-busting server: " + serverId + " from : " + serverIdInstance);
 						}
-
-						// find all the session ids of sessions that are open but are from closed servers
-						statement = clusterServiceSql.getListOpenSessionsFromClosedServersSql();
-						List sessions = m_sqlService.dbRead(statement);
-
-						// process each session to close it 
-						for (Iterator iSessions = sessions.iterator(); iSessions.hasNext();)
-						{
-							String sessionId = (String) iSessions.next();
-
-
-							// get the session
-							UsageSession session = m_usageSessionService.getSession(sessionId);
-
-
-							// a session closed event (logout)
-							Event event = m_eventTrackingService.newEvent(UsageSessionService.EVENT_LOGOUT, null, true);
-							m_eventTrackingService.post(event, session);
-
-							// close this session on the db
-							// TODO: cluster service should not write direct to Session tables.
-							statement = clusterServiceSql.getUpdateSakaiSessionSql();
-							fields[0] = sessionId;
-							boolean ok = m_sqlService.dbWrite(statement, fields);
-							if (!ok)
-							{
-								M_log.warn("run(): dbWrite failed: " + statement);
-							}
-
-							// remove any locks from the session
+						
+						// Close all sessions left over from deleted servers.
+						int nbrClosed = m_usageSessionService.closeSessionsOnInvalidServers(getServers());
+						if ((nbrClosed > 0) && M_log.isInfoEnabled()) M_log.info("Closed " + nbrClosed + " orphaned usage session records");
+						
+						// Delete any orphaned locks from closed or missing sessions.
+						statement = clusterServiceSql.getOrphanedLockSessionsSql();
+						List sessions =  m_sqlService.dbRead(statement);
+						if (sessions.size() > 0) {
+							if (M_log.isInfoEnabled()) M_log.info("Found " + sessions.size() + " closed or deleted sessions in lock table");
 							statement = clusterServiceSql.getDeleteLocksSql();
-							fields[0] = sessionId;
-							ok = m_sqlService.dbWrite(statement, fields);
-							if (!ok)
+							for (Iterator iSessions = sessions.iterator(); iSessions.hasNext();)
 							{
-								M_log.warn("run(): dbWrite failed: " + statement);
+								fields[0] = (String) iSessions.next();
+								boolean ok = m_sqlService.dbWrite(statement, fields);
+								if (!ok)
+								{
+									M_log.warn("run(): dbWrite failed: " + statement);
+								}							
 							}
 						}
 					}
