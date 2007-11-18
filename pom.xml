@@ -11,6 +11,14 @@
   <groupId>org.sakaiproject</groupId>
   <artifactId>cluster-base</artifactId>
   <packaging>pom</packaging>
+  
+  <scm>
+    <connection>scm:svn:https://source.sakaiproject.org/svn/cluster/trunk</connection>
+    <developerConnection>scm:svn:https://source.sakaiproject.org/svn/cluster/trunk</developerConnection>
+    <url>https://source.sakaiproject.org/svn/cluster/trunk</url>
+  </scm>
+  
+
   <modules>
     <module>cluster-api/api</module>
     <module>cluster-impl/impl</module>
