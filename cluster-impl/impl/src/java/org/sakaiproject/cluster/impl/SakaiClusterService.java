@@ -312,6 +312,7 @@ public class SakaiClusterService implements ClusterService
 			}
 
 			m_maintenanceChecker = new Thread(this, "SakaiClusterService.Maintenance");
+			m_maintenanceChecker.setDaemon(true);
 			m_maintenanceCheckerStop = false;
 			m_maintenanceChecker.start();
 		}
